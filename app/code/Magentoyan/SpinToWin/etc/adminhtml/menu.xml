@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+       <add id="Magentoyan_SpinToWin::grid" title="Spin To Win" module="Magentoyan_SpinToWin" sortOrder="48" parent="Magentoyan_Base::parent" action="spintowin/grid" resource="Magentoyan_SpinToWin::grid"/>
+    </menu>
+</config>

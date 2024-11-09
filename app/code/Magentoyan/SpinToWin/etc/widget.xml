@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ 
+<widgets xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Magento/Widget/etc/widget.xsd">
+    <widget id="magentoyan_spintowin" class="Magentoyan\SpinToWin\Block\SpinToWin">
+        <label translate="true">Spin To Win</label>
+        <description>Magentoyan Spin To Win</description>
+        <parameters>
+            <parameter name="width" xsi:type="text" visible="true" sort_order="60" >
+                <label translate="true">Width</label>
+                <description translate="true">Width px</description>
+            </parameter>
+            <parameter name="height" xsi:type="text"  visible="true" sort_order="70" >
+                <label translate="true">Height</label>
+                <description translate="true">Height px</description>
+            </parameter>
+            
+
+        </parameters>
+    </widget>
+</widgets> 

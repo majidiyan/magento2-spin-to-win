@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" >
+    <head>
+        <meta charset="UTF-8">
+        <title>CodePen - Spinning Luck </title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="<?php echo $block->getViewFileUrl('Magentoyan_SpinToWin::css/reset.min.css'); ?>">
+        <link rel='stylesheet' href="<?php echo $block->getViewFileUrl('Magentoyan_SpinToWin::css/style2.css'); ?>">
+        <link rel="stylesheet" href="<?php echo $block->getViewFileUrl('Magentoyan_SpinToWin::css/style.css'); ?>">
+
+        <script src="<?php echo $block->getViewFileUrl('Magentoyan_SpinToWin::js/jquery-2.2.4.min.js'); ?>"></script>
+    </head>
+    <body onload="startupFn()">
+        <!-- partial:index.partial.html -->
+        
+            <div class="deal-wheel">
+                <ul class="spinner"></ul>
+                
+                <div class="ticker"></div>
+                <button class="btn-spin">Spin the Luck</button>
+            </div>
+        
+        <!-- partial -->
+        <script>
+
+            const prizes = <?= $block->getPrizes() ?>
+
+            window.choosen_index = -1;
+            window.confirm_let = false;
+            
+            const wheel = document.querySelector(".deal-wheel");
+            const spinner = wheel.querySelector(".spinner");
+            const trigger = wheel.querySelector(".btn-spin");
+            const ticker = wheel.querySelector(".ticker");
+           // const reaper = wheel.querySelector(".grim-reaper");
+            const prizeSlice = 360 / prizes.length;
+            const prizeOffset = Math.floor(180 / prizes.length);
+            const spinClass = "is-spinning";
+            const selectedClass = "selected";
+            const spinnerStyles = window.getComputedStyle(spinner);
+            let tickerAnim;
+            let rotation = 0;
+            let currentSlice = 0;
+            let prizeNodes;
+
+            const createPrizeNodes = () => {
+                prizes.forEach(({ text, color, reaction, text_color }, i) => {
+                    const rotation = ((prizeSlice * i) * -1) - prizeOffset;
+
+                    spinner.insertAdjacentHTML(
+                            "beforeend",
+                            `<li class="prize" data-reaction=${reaction} style="--rotate: ${rotation}deg ; color: ${text_color}">
+              <span class="text">${text}</span>
+            </li>`
+                            );
+                });
+            };
+
+            const createConicGradient = () => {
+                spinner.setAttribute(
+                        "style",
+                        `background: conic-gradient(
+            from -90deg,
+            ${prizes
+                        .map(({ color }, i) => `${color} 0 ${(100 / prizes.length) * (prizes.length - i)}%`)
+                        .reverse()
+                        }
+          );`
+                        );
+            };
+
+
+            const setupWheel = () => {
+                createConicGradient();
+                createPrizeNodes();
+                prizeNodes = wheel.querySelectorAll(".prize");
+            };
+
+            const spinertia = (min, max) => {
+                min = Math.ceil(min);
+                max = Math.floor(max);
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            };
+
+            const runTickerAnimation = () => {
+
+                const values = spinnerStyles.transform.split("(")[1].split(")")[0].split(",");
+                const a = values[0];
+                const b = values[1];
+                let rad = Math.atan2(b, a);
+
+                if (rad < 0)
+                    rad += (2 * Math.PI);
+
+                const angle = Math.round(rad * (180 / Math.PI));
+                const slice = Math.floor(angle / prizeSlice);
+
+                if (currentSlice !== slice) {
+                    ticker.style.animation = "none";
+                    setTimeout(() => ticker.style.animation = null, 10);
+                    currentSlice = slice;
+                }
+
+                tickerAnim = requestAnimationFrame(runTickerAnimation);
+            };
+
+            const selectPrize = () => {
+                const selected = Math.floor(rotation / prizeSlice);
+                
+                ajaxTwoFn(selected);
+                
+                prizeNodes[selected].classList.add(selectedClass);
+                //reaper.dataset.reaction = prizeNodes[selected].dataset.reaction;
+            };
+
+            trigger.addEventListener("click", () => {
+                
+                ajaxOneFn();
+                
+                if(window.confirm_let)
+                    getIndexFn();
+                
+                if(window.choosen_index >= 0){
+                    
+//                    if (reaper.dataset.reaction !== "resting") {
+//                        reaper.dataset.reaction = "resting";
+//                    }
+
+                    trigger.disabled = true;
+                    //rotation = Math.floor(Math.random() * 360 + spinertia(2000, 5000));
+                    
+                    //majidian
+                    
+                    var sliceDegree = 360 / prizes.length;
+                    rotation = 10 * 360 + (window.choosen_index * sliceDegree) + (sliceDegree / 2);
+                    
+                    //majidian end
+                    
+                    prizeNodes.forEach((prize) => prize.classList.remove(selectedClass));
+                    wheel.classList.add(spinClass);
+                    spinner.style.setProperty("--rotate", rotation);
+                    ticker.style.animation = "none";
+                    runTickerAnimation();
+                }
+            });
+
+            spinner.addEventListener("transitionend", () => {
+                cancelAnimationFrame(tickerAnim);
+                trigger.disabled = false;
+                trigger.focus();
+                rotation %= 360;
+                selectPrize();
+                wheel.classList.remove(spinClass);
+                spinner.style.setProperty("--rotate", rotation);
+            });
+            
+            const ajaxOneFn = () => {
+                
+                jQuery.ajax({
+
+                url: '<?= $block->getBaseUrl() ?>' + 'spintowin/ajaxoperation/doo',
+                type: "POST",
+                dataType: "json",
+                async: false,
+                showLoader: true,
+
+                success: function (result) {
+                    
+                    var resultError = result.error_msg;
+                    var resultResponse = result.my_params_arr;
+
+                    if (resultError.length > 0) {//With error
+                        window.choosen_index = -1;
+                        window.confirm_let = false;
+                        
+                        jQuery("#spintowin-msg-box", window.parent.document).html(resultError);
+                        
+                        if(resultError == '<?= __('please loggin') ?>' ){
+                            
+                            var linkUrl = jQuery("li.link.authorization-link", window.parent.document).find('a').attr('href');                                       
+                            if(linkUrl.length > 0){
+                                window.parent.document.location.href = linkUrl;
+                                return false;
+                            }
+                        }
+                        
+                        if(
+                                resultError == '<?= __('your points is not enough') ?>' ||
+                                resultError == '<?= __('Has no points') ?>'
+                                ){
+                            
+                            var strReward = '<?= __('your points is not enough') ?> ' +
+                                    '<a href="<?= $block->getUrl('rewards/account') ?>"><?= __('How to earn points') ?></a>';
+                            jQuery("#spintowin-msg-box", window.parent.document).html(strReward);
+                        }
+
+                    } else {//No error
+                        
+                        window.confirm_let = true;
+                        /*window.choosen_index = parseInt(resultResponse.choosen_index);*/
+                       
+                       /* Confirm Popup */
+                       if(resultResponse.before_used >= 1){                        
+                        var confirm_msg = resultResponse.confirm_msg;
+                        if (confirm(confirm_msg) == true) {
+                            /* confirm */
+                          } else {
+                            window.choosen_index = -1;
+                            window.confirm_let = false;
+                          }
+                        }
+                        /* Confirm Popup End */
+                        
+                        
+                        
+                    }
+                  
+                },
+                error: function () {
+                    window.choosen_index = -1;
+                    window.confirm_let = false;
+                    console.log('some error !');
+                }
+
+            });
+            };
+            
+            const ajaxTwoFn = (selected) => {
+                
+                jQuery.ajax({
+
+                url: '<?= $block->getBaseUrl() ?>' + 'spintowin/ajaxoperation/dox',
+                type: "POST",
+                dataType: "json",
+                data: {input_data: selected},
+                async: false,
+                showLoader: true,
+
+                success: function (result) {
+                    
+                    var resultError = result.error_msg;
+                    var resultResponse = result.my_params_arr;
+
+                    if (resultError.length > 0) {//With error
+                        
+                        jQuery("#spintowin-board-one-box", window.parent.document).html(resultResponse.number_of_customer_club_points_msg);
+                        
+                            
+                        if(resultError != 'pooch'){
+                            
+                            jQuery("#spintowin-msg-box", window.parent.document).html(resultError);
+                        }
+
+                    } else {//No error
+                        
+                        
+                        jQuery("#spintowin-msg-box", window.parent.document).html(
+                                resultResponse.coupon_code + "<br>" + resultResponse.description
+                    );
+                        jQuery("#spintowin-board-one-box", window.parent.document).html(resultResponse.number_of_customer_club_points_msg);
+                        
+                    }
+
+
+                },
+                error: function () {
+                    
+                    console.log('some error !');
+                }
+
+            });
+            };
+
+            const getIndexFn = () => {//???
+                
+                jQuery.ajax({
+
+                url: '<?= $block->getBaseUrl() ?>' + 'spintowin/ajaxoperation/getindex',
+                type: "POST",
+                dataType: "json",
+                async: false,
+                showLoader: true,
+
+                success: function (result) {
+                    
+                    var resultError = result.error_msg;
+                    var resultResponse = result.my_params_arr;
+
+                    if (resultError.length > 0) {//With error
+                        window.choosen_index = -1;
+                        window.confirm_let = false;                        
+                    } else {//No error            
+                        window.choosen_index = parseInt(resultResponse.choosen_index); 
+                        window.confirm_let = parseInt(resultResponse.choosen_index) >= 0;  /* = true; */                                             
+                    }
+                  
+                },
+                error: function () {
+                    window.choosen_index = -1;
+                    console.log('some error !');
+                }
+
+            });
+            };
+            
+            const startupFn = () => {
+            
+            
+            
+                jQuery.ajax({
+
+                url: '<?= $block->getBaseUrl() ?>' + 'spintowin/ajaxoperation/doostart',
+                type: "POST",
+                dataType: "json",
+                
+                showLoader: true,
+
+                success: function (result) {
+                    
+                    var resultError = result.error_msg;
+                    var resultResponse = result.my_params_arr;
+
+                    if (resultError.length > 0) {//With error
+                       
+                    } else {//No error
+                        
+                        jQuery("#spintowin-board-one-box", window.parent.document).html(resultResponse.number_of_customer_club_points_msg);
+                        
+                        
+                    }
+
+
+                },
+                error: function () {
+                    
+                    console.log('some error !');
+                }
+
+            });
+            };
+            
+            setupWheel();
+        </script>
+
+    </body>
+</html>
+

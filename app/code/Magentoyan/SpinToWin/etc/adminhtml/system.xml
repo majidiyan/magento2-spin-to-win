@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../Config/etc/system_file.xsd">
+    <system>
+<!--        <tab id="magentoyan" translate="label" sortOrder="100">
+            <label>Magentoyan</label>
+        </tab>-->
+        <section id="magentoyan_spintowin" translate="label" sortOrder="212" showInDefault="1" showInWebsite="1" showInStore="1">
+            <class>separator-top</class>
+            <label>Spin To Win</label>
+            <tab>magentoyan_base</tab>
+            <resource>Magentoyan_SpinToWin::spintowin_config</resource>
+            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>General</label>
+                
+                <field id="use_reward_points" translate="label" type="text" sortOrder="6" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Use reward points</label>
+                </field>
+                
+               
+                
+            </group>
+
+            
+        </section>
+    </system>
+</config>
